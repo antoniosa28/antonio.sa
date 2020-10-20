@@ -1,0 +1,575 @@
+Arquivo .H : 
+
+#define SUCCESS 0
+#define OUT_OF_MEMORY -1
+#define ELEM_NOT_FOUND -2
+#define NULL_POINTER -3
+
+typedef struct aluno{
+    int mat;
+    char name[30];
+    float n1, n2, n3;
+}aluno;
+
+typedef struct list List;
+
+List* list_create();
+int list_free(List *li);
+int list_push_front(List *li, aluno al);
+int list_push_back(List *li, aluno al);
+int list_insert(List *li, int pos, aluno al);
+int list_insert_sorted(List *li, aluno al);
+int list_size(List *li);
+int list_pop_front(List *li);
+int list_pop_back(List *li);
+int list_erase(List *li, int pos);
+int list_find_pos(List *li, int pos, aluno *al);
+int list_find_mat(List *li, int mat, aluno *al);
+int list_front(List *li, aluno *al);
+int list_back(List *li, aluno *al);
+int list_get_pos(List *li, int nmat, int *pos);
+int list_print(List* li);
+
+
+Arquivo .C : 
+
+#include "1ListaEncadeada.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct list_node List_node;
+
+struct list{
+    List_node *head;
+};
+
+struct list_node{
+    struct aluno data;
+    List_node *next;
+};
+
+// Criando lista
+List* list_create(){
+
+    List *li;
+    li = malloc(sizeof(List));
+
+    if(li != NULL){
+        li->head = NULL;
+    }
+
+    return li;
+}
+
+// Insere no comeco da lista
+int list_push_front(List *li, aluno al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }
+    List_node *node;
+    node = malloc(sizeof(List_node));
+    node->next = li->head;
+    li->head = node;
+
+    node->data = al;
+
+    return SUCCESS;
+}
+
+// Inserir no final da lista
+int list_push_back(List *li, aluno al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if (li->head == NULL){
+        return list_push_front(li, al);
+    }
+
+    List_node *aux, *node;
+    node = malloc(sizeof(List_node));
+
+    aux = li->head;
+    while(aux->next != NULL){
+        aux = aux->next;
+    }
+    aux->next = node;
+    node->data = al;
+    node->next = NULL;
+
+    return SUCCESS;
+
+}
+
+// Inserir na posição desejada
+int list_insert(List *li, int pos, aluno al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL && pos > 1){
+        return OUT_OF_MEMORY;
+    }else if(pos == 1){
+        return list_push_front(li, al);
+    }
+    List_node *node, *aux;
+    node = malloc(sizeof(List_node));
+    aux = li->head;
+
+    int cont = 2;
+    while(cont < pos){
+        aux = aux->next;
+        cont++;
+    }
+    if(aux == NULL){
+        return OUT_OF_MEMORY;
+    }
+    node->data = al;
+    node->next = aux->next;
+    aux->next = node;
+
+    return SUCCESS;
+}
+
+
+// Inserir elemento em posição ordenada REVISAR
+int list_insert_sorted(List *li, aluno al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(al.mat < li->head->data.mat){
+        return list_push_front(li, al);
+    }
+
+    List_node *node, *aux;
+    node = malloc(sizeof(List_node));
+    node->data = al;
+    aux = li->head;
+
+    while(al.mat > aux->data.mat && aux->next != NULL){
+        if(al.mat < aux->next->data.mat){
+            break;
+        }
+        aux = aux->next;
+    }
+
+    node->next = aux->next;
+    aux->next = node;
+
+    return SUCCESS;
+}
+
+
+// Retorna tamanho da lista
+int list_size(List *li){
+
+    List_node *node;
+    node = li->head;
+
+    int cont = 0;
+    while(node != NULL){
+        node = node->next;
+        cont++;
+    }
+
+    return cont;
+}
+
+
+// Remove primeiro elemento
+int list_pop_front(List *li){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL){
+        return ELEM_NOT_FOUND;
+    }
+
+    List_node *aux;
+    aux = li->head->next;
+    li->head = aux;
+
+    return SUCCESS;
+}
+
+// Remove no fim da lista
+int list_pop_back(List *li){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL){
+        return ELEM_NOT_FOUND;
+    }else if(li->head->next == NULL){
+        li->head = NULL;
+        return SUCCESS;
+    }
+
+    List_node *node;
+    node = li->head;
+
+    while(node->next->next != NULL){
+        node = node->next;
+    }
+
+    node->next = NULL;
+
+    return SUCCESS;
+}
+
+// Remove na posição
+int list_erase(List *li, int pos){
+
+    int tam = list_size(li);
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL || pos > tam){
+        return ELEM_NOT_FOUND;
+    }else if(pos == 1){
+        return list_pop_front(li);
+    }else if(pos == tam){
+        return list_pop_back(li);
+    }
+
+    List_node *node;
+    node = li->head;
+    int cont = 1;
+
+    while(cont != pos-1){
+        node = node->next;
+        cont++;
+    }
+
+    node->next = node->next->next;
+    return SUCCESS;
+}
+
+// Encontrar por posição
+int list_find_pos(List *li, int pos, aluno *al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL || pos > list_size(li)){
+        return ELEM_NOT_FOUND;
+    }else if(pos == 1){
+        *al = li->head->data;
+        return SUCCESS;
+    }
+
+    List_node *node;
+    node = li->head;
+    int cont = 1;
+
+    while(pos != cont){
+        node = node->next;
+        cont++;
+    }
+
+    *al = node->data;
+    return SUCCESS;
+}
+
+// Encontrar por matricula
+int list_find_mat(List *li, int mat, aluno *al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL){
+        return ELEM_NOT_FOUND;
+    }
+
+    List_node *node;
+    node = li->head;
+
+    while(node->next != NULL){
+        if(node->data.mat == mat){
+            break;
+        }
+        node = node->next;
+    }
+
+    if(mat != node->data.mat){
+        return ELEM_NOT_FOUND;
+    }
+
+    *al = node->data;
+    return SUCCESS;
+}
+
+// Primeiro elemento da lista
+int list_front(List *li, aluno *al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL){
+        return ELEM_NOT_FOUND;
+    }
+
+    *al = li->head->data;
+    return SUCCESS;
+}
+
+// Ultimo elemento da lista
+int list_back(List *li, aluno *al){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL){
+        return ELEM_NOT_FOUND;
+    }
+
+    List_node *node;
+    node = li->head;
+
+    while(node->next != NULL){
+        node = node->next;
+    }
+
+    *al = node->data;
+    return SUCCESS;
+}
+
+// Retornar posição de aluno pela matricula
+int list_get_pos(List *li, int nmat, int *pos){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }else if(li->head == NULL){
+        return ELEM_NOT_FOUND;
+    }
+
+    List_node *node;
+    node = li->head;
+    int cont = 1;
+
+    while(node->next != NULL){
+        if(node->data.mat == nmat){
+            break;
+        }
+        node = node->next;
+        cont++;
+    }
+
+    if(nmat != node->data.mat){
+        return ELEM_NOT_FOUND;
+    }
+
+    *pos = cont;
+    return SUCCESS;
+}
+
+// Liberando lista
+int list_free(List *li){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }
+    if(li->head == NULL){
+        free(li);
+        return SUCCESS;
+    }
+
+    List_node *node, *aux;
+    node = li->head;
+
+
+    while(node != NULL){
+        aux = node->next;
+        free(node);
+        node = aux;
+    }
+    free(li);
+    return SUCCESS;
+}
+
+// Imprimindo lista
+int list_print(List* li){
+
+    if(li == NULL){
+        return NULL_POINTER;
+    }
+
+    List_node *node;
+    node = li->head;
+
+    printf("\nLista Alunos: \n\n");
+    while(node != NULL){
+        printf("Nome: %s\n", node->data.name);
+        printf("Matricula %d\n", node->data.mat);
+        printf("Notas: P1 %.2f; P2 %.2f; P3 %.2f\n\n", node->data.n1, node->data.n2, node->data.n3);
+        node = node->next;
+    }
+
+    return SUCCESS;
+}
+
+Main c :
+
+#include "ListaEncadeada.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(){
+
+    aluno al;
+    aluno a[6] = {{115, "Antonio", 6.0, 7.6, 9.8},
+                  {110, "Samantha", 9.7, 6.6, 6.0},
+                  {124, "Ricardo", 6.5, 6.1, 5.8},
+                  {125, "Jorge", 10.0, 10.0, 6.3},
+                  {127, "Augusto", 8.0, 4.4, 6.5},
+                  {103, "Pedro", 6.5, 6.0, 5.0}};
+
+    List *li;
+    li = list_create();
+
+    int verifica, i, pos;
+    for(i = 4; i >= 0; i--){
+        verifica = list_push_front(li, a[i]);
+        if(verifica == -3){
+            printf("\nNull Pointer\n");
+        }else{
+            printf("\nPush front Success\n");
+        }
+    }
+
+    verifica = list_push_back(li, a[0]);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nPush Back Success\n");
+    }
+
+    verifica = list_print(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nPrint Success\n");
+    }
+    verifica = list_insert(li, 1, a[3]);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -1){
+        printf("\nOut of memory\n");
+    }else{
+        printf("\nInsert pos Success\n");
+    }
+
+
+    verifica = list_print(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nPrint Success\n");
+    }
+
+    verifica = list_insert_sorted(li, a[5]);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nInsert Sorted Success\n");
+    }
+
+    verifica = list_print(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nPrint Success\n");
+    }
+
+    printf("\nTamanho da lista %d\n", list_size(li));
+
+    verifica = list_pop_front(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found");
+    }else{
+        printf("\nPop Front Success\n");
+    }
+
+    verifica = list_pop_back(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\nPop Back Success\n");
+    }
+
+
+    verifica = list_erase(li, 7);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\nErase Success\n");
+    }
+
+    verifica = list_print(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nPrint Success\n");
+    }
+
+    verifica = list_find_pos(li, 4, &al);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\nFind Pos Success\n");
+        printf("Aluno: %s\n", al.name);
+    }
+
+    verifica = list_find_mat(li, 110, &al);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\nFind Mat Success\n");
+        printf("Aluno: %s\n", al.name);
+    }
+
+    verifica = list_front(li, &al);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\nFind Front Success\n");
+        printf("Aluno: %s\n", al.name);
+    }
+
+    verifica = list_back(li, &al);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\nFind Back Success\n");
+        printf("Aluno: %s\n", al.name);
+    }
+
+    verifica = list_get_pos(li, 110, &pos);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else if(verifica == -2){
+        printf("\nElement Not Found\n");
+    }else{
+        printf("\n Get Pos Success\n");
+        printf("Pos: %d\n", pos);
+    }
+
+
+    verifica = list_free(li);
+    if(verifica == -3){
+        printf("\nNull Pointer\n");
+    }else{
+        printf("\nFree Success\n");
+    }
+
+}
+
+
