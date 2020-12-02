@@ -1,3 +1,6 @@
+
+// Correção!
+
 int splice(*List dest,*List source,int pos){
 
 DlNode *begin_source,*end_source,*current;
