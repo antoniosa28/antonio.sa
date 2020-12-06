@@ -1,6 +1,6 @@
 
 // Correção!
-
+// código não está de acordo com o .h do TAD passado
 int splice(*List dest,*List source,int pos){
 
 DlNode *begin_source,*end_source,*current;

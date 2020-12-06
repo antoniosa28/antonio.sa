@@ -7,10 +7,10 @@ int list_erase_even(List *li){
     dlnode *node;
     int cont = 0;
 
-    while(cont != li->size){
+    while(cont != li->size){ // pq dois while??
         node = li->begin;
         cont = 0;
-        while(cont != li->size){
+        while(cont != li->size){ // pq dois while??
             if((node->data)%2 == 0){
                 list_erase(li,cont+1);
                 break;
@@ -21,3 +21,5 @@ int list_erase_even(List *li){
     }
     return 0;
 }
+
+ex b) os desenhos estão errados
